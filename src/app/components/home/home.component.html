@@ -1,0 +1,318 @@
+<div class="relative w-full">
+    <div class="relative h-0 pb-[40%] md:pb-[30%] lg:pb-[25%] overflow-hidden">
+        <img src="fcc.jpg" alt="Neighborhood community" class="absolute top-0 left-0 w-full h-full object-cover">
+
+        <!-- Centered text -->
+        <div class="absolute inset-0 flex flex-col items-center justify-center text-white text-center px-4">
+            <h1 class="text-xl md:text-4xl lg:text-5xl font-bold mb-2 text-shadow">Fiesta Communities Castillejos</h1>
+            <p class="text-sm md:text-xl lg:text-2xl text-shadow">Family. Investment. Environment. Shelter. Technology.
+                Affordable.</p>
+        </div>
+    </div>
+</div>
+
+<div class="dues-container max-w-6xl mx-auto p-4 md:p-6 mt-5 sm:mt-6">
+    <div class="mb-8 text-center">
+        <h2 class="text-3xl font-bold text-sky-900">Monthly Dues History</h2>
+        <p class="text-gray-600 mt-2">Check your monthly dues payment status and history</p>
+    </div>
+
+    <div class="account-lookup bg-white rounded-lg shadow-md p-6 mb-8">
+        <form [formGroup]="duesForm" (ngSubmit)="getDuesHistory()">
+            <label for="accountNumber" class="block text-sm font-medium text-gray-700 mb-1">Account Number</label>
+
+            <!-- Flex container for input and button -->
+            <div class="flex gap-4 items-start mb-4">
+                <div class="flex-1">
+                    <input type="text" id="accountNumber" formControlName="accountNumber"
+                        placeholder="Enter your account number"
+                        class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition" />
+                    <div *ngIf="duesForm.get('accountNumber')?.invalid && duesForm.get('accountNumber')?.touched"
+                        class="text-red-500 text-sm mt-1">
+                        Please enter a valid account number
+                    </div>
+                </div>
+
+                <button type="submit" [disabled]="duesForm.invalid || loading"
+                    class="bg-sky-900 hover:bg-sky-500 text-white font-medium py-2 px-6 rounded-md shadow transition focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-opacity-50 disabled:opacity-50">
+                    <span *ngIf="!loading">View</span>
+                    <span *ngIf="loading">Loading...</span>
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <div *ngIf="error" class="bg-red-50 border-l-4 border-red-500 p-4 mb-8 rounded">
+        <div class="flex">
+            <div class="flex-shrink-0">
+                <svg class="h-5 w-5 text-red-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"
+                    fill="currentColor">
+                    <path fill-rule="evenodd"
+                        d="M10 18a8 8 0 100-16 8 8 0 000 16zM9 7a1 1 0 012 0v5a1 1 0 11-2 0V7zm1 9a1 1 0 100-2 1 1 0 000 2z"
+                        clip-rule="evenodd" />
+                </svg>
+            </div>
+            <div class="ml-3">
+                <p class="text-sm text-red-700">{{ error }}</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- No payment record -->
+    <div *ngIf="duesHistory && duesHistory.count === 0" class="bg-white rounded-lg shadow-md p-6 mb-8">
+        <div class="text-center py-8">
+            <svg class="mx-auto h-16 w-16 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none"
+                viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+            <h3 class="mt-4 text-lg font-medium text-gray-900">No Payment Records Found</h3>
+            <p class="mt-2 text-gray-600">We couldn't find any payment records for account #{{
+                duesHistory.homeowner.accountNumber }}.</p>
+            <p class="mt-1 text-gray-600">{{ duesHistory.currentMonthStatus.message }}</p>
+        </div>
+    </div>
+
+    <!-- Results with data -->
+    <div *ngIf="duesHistory && duesHistory.count > 0" class="bg-white rounded-lg shadow-md overflow-hidden">
+        <!-- Homeowner info -->
+        <div class="bg-sky-900 text-white p-6">
+            <h3 class="text-xl font-bold">{{ duesHistory.homeowner.name }}</h3>
+            <div class="mt-1 text-indigo-100">Account #: {{ duesHistory.homeowner.accountNumber }}</div>
+        </div>
+
+        <!-- Current month status -->
+        <div class="p-6 border-b"
+            [ngClass]="{'bg-green-50': duesHistory.currentMonthStatus.status === 'paid', 'bg-yellow-50': duesHistory.currentMonthStatus.status === 'pending', 'bg-red-50': duesHistory.currentMonthStatus.status === 'overdue'}">
+            <div class="flex items-start">
+                <div class="flex-shrink-0 mt-1">
+                    <div class="w-4 h-4 rounded-full"
+                        [ngClass]="{'bg-green-500': duesHistory.currentMonthStatus.status === 'paid', 'bg-yellow-500': duesHistory.currentMonthStatus.status === 'pending', 'bg-red-500': duesHistory.currentMonthStatus.status === 'overdue'}">
+                    </div>
+                </div>
+                <div class="ml-3">
+                    <h4 class="text-lg font-medium text-gray-900">This Month's Status</h4>
+                    <p class="mt-1 text-gray-700">{{ duesHistory.currentMonthStatus.message }}</p>
+                    <p class="mt-1 text-gray-700"
+                        [ngClass]="{'text-green-500': duesHistory.currentMonthStatus.status === 'paid', 'text-red-500': duesHistory.currentMonthStatus.status === 'unpaid'}">
+                        {{ duesHistory.currentMonthStatus.status }}</p>
+                    <div *ngIf="duesHistory.currentMonthStatus.exists"
+                        class="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div class="text-sm">
+                            <span class="block text-gray-500">Amount</span>
+                            <span class="font-medium">₱{{ duesHistory.currentMonthStatus.duesAmount.toFixed(2) }}</span>
+                        </div>
+                        <div class="text-sm">
+                            <span class="block text-gray-500">Due Date</span>
+                            <span class="font-medium">{{ getFormattedDate(duesHistory.currentMonthStatus.dueDate)
+                                }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Summary stats -->
+        <div class=" border-b">
+            <div class="p-6 text-center">
+                <div class="text-2xl font-bold text-green-600">₱{{ duesHistory.summary.amountPaid.toFixed(2) }}</div>
+                <div class="text-sm text-gray-500 mt-1">Total Paid</div>
+            </div>
+        </div>
+
+        <div class="p-6">
+            <h3 class="text-lg font-medium text-gray-900 mb-4">Payment History</h3>
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead>
+                        <tr>
+                            <th
+                                class="px-4 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Month</th>
+                            <th
+                                class="px-4 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Due Date</th>
+                            <th
+                                class="px-4 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Amount</th>
+                            <th
+                                class="px-4 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Status</th>
+                            <th
+                                class="px-4 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Payment Date</th>
+                            <th
+                                class="px-4 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Receipt #</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        <tr *ngFor="let payment of paginatedDuesHistory"
+                            [ngClass]="{'bg-green-50': payment.paymentStatus === 'paid', 'bg-yellow-50': payment.paymentStatus === 'pending', 'bg-red-50': payment.paymentStatus === 'overdue'}">
+                            <td class="px-4 py-3 whitespace-nowrap text-sm">{{ payment.remarks?.replace('Payment for ',
+                                '') || getFormattedDate(payment.dueDate) }}</td>
+                            <td class="px-4 py-3 whitespace-nowrap text-sm">{{ getFormattedDate(payment.dueDate) }}</td>
+                            <td class="px-4 py-3 whitespace-nowrap text-sm">₱{{ payment.duesAmount.toFixed(2) }}</td>
+                            <td class="px-4 py-3 whitespace-nowrap text-sm">
+                                <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full" [ngClass]="{'bg-green-100 text-green-800': payment.paymentStatus === 'paid', 
+                           'bg-yellow-100 text-yellow-800': payment.paymentStatus === 'pending',
+                           'bg-red-100 text-red-800': payment.paymentStatus === 'overdue'}">
+                                    {{ payment.paymentStatus }}
+                                </span>
+                            </td>
+                            <td class="px-4 py-3 whitespace-nowrap text-sm">{{ payment.paymentDate ?
+                                getFormattedDate(payment.paymentDate) : '-' }}</td>
+                            <td class="px-4 py-3 whitespace-nowrap text-sm">{{ payment.receiptNumber || '-' }}</td>
+                        </tr>
+
+                        <!-- Empty state when no records are found -->
+                        <tr *ngIf="paginatedDuesHistory.length === 0">
+                            <td colspan="6" class="px-4 py-8 text-center text-gray-500">
+                                No payment records found for the selected page.
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination controls -->
+            <div *ngIf="totalPages > 0"
+                class="flex items-center justify-between border-t border-gray-200 px-4 py-3 sm:px-6 mt-4">
+                <div class="flex flex-1 justify-between sm:hidden">
+                    <!-- Mobile pagination -->
+                    <button (click)="prevPage()" [disabled]="currentPage === 1"
+                        class="relative inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+                        [ngClass]="{'opacity-50 cursor-not-allowed': currentPage === 1}">
+                        Previous
+                    </button>
+                    <div class="text-sm text-gray-700">
+                        Page {{ currentPage }} of {{ totalPages }}
+                    </div>
+                    <button (click)="nextPage()" [disabled]="currentPage === totalPages"
+                        class="relative ml-3 inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+                        [ngClass]="{'opacity-50 cursor-not-allowed': currentPage === totalPages}">
+                        Next
+                    </button>
+                </div>
+
+                <div class="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
+                    <!-- Desktop pagination -->
+                    <div>
+                        <p class="text-sm text-gray-700">
+                            Showing <span class="font-medium">{{ (currentPage - 1) * pageSize + 1 }}</span> to
+                            <span class="font-medium">{{ Math.min(currentPage * pageSize, duesHistory.count) }}</span>
+                            of
+                            <span class="font-medium">{{ duesHistory.count }}</span> results
+                        </p>
+                    </div>
+
+                    <div>
+                        <nav class="isolate inline-flex -space-x-px rounded-md shadow-sm" aria-label="Pagination">
+                            <!-- Previous button -->
+                            <button (click)="prevPage()" [disabled]="currentPage === 1"
+                                class="relative inline-flex items-center rounded-l-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0"
+                                [ngClass]="{'opacity-50 cursor-not-allowed': currentPage === 1}">
+                                <span class="sr-only">Previous</span>
+                                <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                    <path fill-rule="evenodd"
+                                        d="M12.79 5.23a.75.75 0 01-.02 1.06L8.832 10l3.938 3.71a.75.75 0 11-1.04 1.08l-4.5-4.25a.75.75 0 010-1.08l4.5-4.25a.75.75 0 011.06.02z"
+                                        clip-rule="evenodd" />
+                                </svg>
+                            </button>
+
+                            <!-- Page numbers -->
+                            <ng-container *ngFor="let page of getPageNumbers()">
+                                <!-- Ellipsis -->
+                                <span *ngIf="page === -1"
+                                    class="relative inline-flex items-center px-4 py-2 text-sm font-semibold text-gray-700 ring-1 ring-inset ring-gray-300 focus:outline-offset-0">
+                                    ...
+                                </span>
+
+                                <!-- Page number -->
+                                <button *ngIf="page !== -1" (click)="goToPage(page)"
+                                    class="relative inline-flex items-center px-4 py-2 text-sm font-semibold ring-1 ring-inset ring-gray-300 focus:z-20 focus:outline-offset-0"
+                                    [ngClass]="{'bg-sky-800 text-white focus-visible:outline-sky-700': currentPage === page, 'text-gray-900 hover:bg-gray-50': currentPage !== page}">
+                                    {{ page }}
+                                </button>
+                            </ng-container>
+
+                            <!-- Next button -->
+                            <button (click)="nextPage()" [disabled]="currentPage === totalPages"
+                                class="relative inline-flex items-center rounded-r-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0"
+                                [ngClass]="{'opacity-50 cursor-not-allowed': currentPage === totalPages}">
+                                <span class="sr-only">Next</span>
+                                <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                    <path fill-rule="evenodd"
+                                        d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z"
+                                        clip-rule="evenodd" />
+                                </svg>
+                            </button>
+                        </nav>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <div *ngIf="garbageStatus" class="bg-white rounded-lg shadow-md overflow-hidden mt-8">
+        <div class="bg-sky-900 text-white p-6">
+            <h3 class="text-xl font-bold">Garbage Collection Status</h3>
+            <div class="mt-1 text-green-100">Account #: {{ duesHistory.homeowner.accountNumber }}</div>
+        </div>
+
+        <!-- Eligibility Status -->
+        <div class="p-6 border-b"
+            [ngClass]="{'bg-green-50': garbageStatus.eligible, 'bg-red-50': !garbageStatus.eligible}">
+            <div class="flex items-start">
+                <div class="flex-shrink-0 mt-1">
+                    <div class="w-4 h-4 rounded-full"
+                        [ngClass]="{'bg-green-500': garbageStatus.eligible, 'bg-red-500': !garbageStatus.eligible}">
+                    </div>
+                </div>
+                <div class="ml-3">
+                    <h4 class="text-lg font-medium text-gray-900">Service Eligibility</h4>
+                    <p class="mt-1 text-gray-700"
+                        [ngClass]="{'text-green-600 font-medium': garbageStatus.eligible, 'text-red-600 font-medium': !garbageStatus.eligible}">
+                        {{ garbageStatus.eligible ? 'Your account is eligible for garbage collection services' : 'Your
+                        account is not eligible for garbage collection services' }}
+                    </p>
+                    <p class="mt-1 text-sm text-gray-600" *ngIf="!garbageStatus.eligible">
+                        Please ensure your monthly dues are paid up to date to maintain eligibility.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <div class="p-6">
+            <h4 class="text-lg font-medium text-gray-900 mb-4">Collection Information</h4>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Last Collection -->
+                <div class="bg-gray-50 p-4 rounded-lg">
+                    <h5 class="font-medium text-gray-800 mb-2">Last Collection</h5>
+                    <p class="text-gray-700">
+                        {{ garbageStatus.lastCollection ? garbageStatus.lastCollection : 'No collection record found' }}
+                    </p>
+                </div>
+
+                <!-- Current Month -->
+                <div class="bg-gray-50 p-4 rounded-lg">
+                    <h5 class="font-medium text-gray-800 mb-2">This Month's Collections</h5>
+                    <p class="text-gray-700 mb-2">
+                        Total Collections: <span class="font-medium">{{ garbageStatus.collectionCount }}</span>
+                    </p>
+                    <div *ngIf="garbageStatus.collectionCount > 0">
+                        <p class="text-sm text-gray-600 mb-1">Collection dates:</p>
+                        <ul class="list-disc pl-5 text-gray-700">
+                            <li *ngFor="let date of garbageStatus.currentMonthCollections">{{ date }}</li>
+                        </ul>
+                    </div>
+                    <p *ngIf="garbageStatus.collectionCount === 0" class="text-gray-600 italic">
+                        No collections recorded this month
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
