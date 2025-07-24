@@ -50,11 +50,10 @@ export class HomeComponent implements OnInit {
 
     this.loading = true;
     this.error = '';
-    this.currentPage = 1; // Reset to first page when fetching new data
+    this.currentPage = 1;
 
     const accountNumber = this.duesForm.get('accountNumber')?.value;
 
-    // Using forkJoin to make both API calls concurrently
     forkJoin({
       dues: this.dataService.getMonthlyDuesHistory(accountNumber),
       garbage: this.dataService.getGarbageCollectionStatus(accountNumber)
@@ -64,7 +63,6 @@ export class HomeComponent implements OnInit {
         this.garbageStatus = response.garbage.garbageCollectionStatus;
         this.loading = false;
 
-        // Set up pagination if we have data
         if (this.duesHistory && this.duesHistory.duesHistory) {
           this.setUpPagination();
         }
@@ -76,7 +74,6 @@ export class HomeComponent implements OnInit {
     });
   }
 
-  // Pagination methods
   setUpPagination(): void {
     if (!this.duesHistory || !this.duesHistory.duesHistory || !this.duesHistory.duesHistory.length) {
       this.totalPages = 0;
