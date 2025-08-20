@@ -147,16 +147,19 @@
                         </tr>
                     </thead>
                     <tbody class="bg-white divide-y divide-gray-200">
-                        <tr *ngFor="let payment of paginatedDuesHistory"
-                            [ngClass]="{'bg-green-50': payment.paymentStatus === 'paid', 'bg-yellow-50': payment.paymentStatus === 'pending', 'bg-red-50': payment.paymentStatus === 'overdue'}">
-                            <td class="px-4 py-3 whitespace-nowrap text-sm">{{ payment.remarks?.replace('Payment for ',
-                                '') || getFormattedDate(payment.dueDate) }}</td>
+                        <tr *ngFor="let payment of paginatedDuesHistory" [ngClass]="{'bg-green-50': payment.paymentStatus === 'paid', 
+               'bg-yellow-50': payment.paymentStatus === 'pending', 
+               'bg-red-50': payment.paymentStatus === 'overdue'}">
+
+                            <!-- Changed this line to always show month/year based on dueDate -->
+                            <td class="px-4 py-3 whitespace-nowrap text-sm">{{ getMonthYear(payment.dueDate) }}</td>
+
                             <td class="px-4 py-3 whitespace-nowrap text-sm">{{ getFormattedDate(payment.dueDate) }}</td>
                             <td class="px-4 py-3 whitespace-nowrap text-sm">₱{{ payment.duesAmount.toFixed(2) }}</td>
                             <td class="px-4 py-3 whitespace-nowrap text-sm">
-                                <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full" [ngClass]="{'bg-green-100 text-green-800': payment.paymentStatus === 'paid', 
-                           'bg-yellow-100 text-yellow-800': payment.paymentStatus === 'pending',
-                           'bg-red-100 text-red-800': payment.paymentStatus === 'overdue'}">
+                                <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full" [ngClass]="{'bg-green-100 text-green-800': payment.paymentStatus === 'paid',
+                         'bg-yellow-100 text-yellow-800': payment.paymentStatus === 'pending',
+                         'bg-red-100 text-red-800': payment.paymentStatus === 'overdue'}">
                                     {{ payment.paymentStatus }}
                                 </span>
                             </td>

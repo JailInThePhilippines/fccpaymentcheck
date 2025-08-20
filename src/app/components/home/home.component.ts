@@ -157,4 +157,11 @@ export class HomeComponent implements OnInit {
 
     return pages;
   }
+
+  getMonthYear(dateString: string): string {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long'
+    });
+  }
 }
