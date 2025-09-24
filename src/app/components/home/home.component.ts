@@ -22,6 +22,7 @@ export class HomeComponent implements OnInit {
     'pending': 'status-pending',
     'overdue': 'status-overdue'
   };
+  isDownloading = false;
 
   // Pagination properties
   pageSize = 5;
@@ -41,6 +42,31 @@ export class HomeComponent implements OnInit {
   }
 
   ngOnInit(): void {
+  }
+
+  downloadSOA() {
+    if (this.duesForm.invalid) {
+      return;
+    }
+
+    const accountNumber = this.duesForm.get('accountNumber')?.value;
+    this.isDownloading = true;
+
+    this.dataService.getStatementOfAccount(accountNumber).subscribe({
+      next: (pdfBlob: Blob) => {
+        const url = window.URL.createObjectURL(pdfBlob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `SOA_${accountNumber}.pdf`;
+        a.click();
+        window.URL.revokeObjectURL(url);
+        this.isDownloading = false;
+      },
+      error: (err) => {
+        this.isDownloading = false;
+        this.error = err.error?.message || 'Failed to download SOA';
+      }
+    });
   }
 
   getDuesHistory() {

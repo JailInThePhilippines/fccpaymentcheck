@@ -10,13 +10,20 @@ export class DataService {
   private baseUrl = 'https://hoamsapi-v2ia.onrender.com/api/homeowner';
 
   constructor(private http: HttpClient) { }
-  
+
   getMonthlyDuesHistory(accountNumber: string): Observable<DuesHistoryResponse> {
     return this.http.post<DuesHistoryResponse>(`${this.baseUrl}/dues`, { accountNumber });
   }
 
   getGarbageCollectionStatus(accountNumber: string): Observable<any> {
     return this.http.post<any>(`${this.baseUrl}/garbage-collection`, { accountNumber });
+  }
+
+  getStatementOfAccount(accountNumber: string): Observable<Blob> {
+    return this.http.get(`${this.baseUrl}/soa`, {
+      params: { accountNumber },
+      responseType: 'blob' 
+    });
   }
 
 }
