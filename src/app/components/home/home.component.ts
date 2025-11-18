@@ -1,26 +1,41 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { DataService } from '../../services/data.service';
+import { AuthService } from '../../services/auth.service';
 import { forkJoin } from 'rxjs';
+import { jwtDecode } from 'jwt-decode';
+
+interface DecodedToken {
+  user: {
+    id: string;
+    role: string;
+    sessionId: string;
+    fullName: string;
+    accountnumber: string;
+  };
+  iat: number;
+  exp: number;
+}
 
 @Component({
   selector: 'app-home',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule],
   templateUrl: './home.component.html',
   styleUrl: './home.component.css'
 })
 export class HomeComponent implements OnInit {
-  duesForm: FormGroup;
   duesHistory: any = null;
   garbageStatus: any = null;
   loading = false;
   error = '';
+  accountNumber: string = '';
   statusClass = {
     'paid': 'status-paid',
     'pending': 'status-pending',
-    'overdue': 'status-overdue'
+    'overdue': 'status-overdue',
+    'upcoming': 'status-upcoming',
+    'unpaid': 'status-unpaid'
   };
   isDownloading = false;
 
@@ -33,31 +48,46 @@ export class HomeComponent implements OnInit {
   Math = Math;
 
   constructor(
-    private fb: FormBuilder,
-    private dataService: DataService
-  ) {
-    this.duesForm = this.fb.group({
-      accountNumber: ['', [Validators.required, Validators.minLength(5)]]
-    });
-  }
+    private dataService: DataService,
+    private authService: AuthService
+  ) {}
 
   ngOnInit(): void {
+    this.getAccountNumberFromToken();
+    if (this.accountNumber) {
+      this.getDuesHistory();
+    } else {
+      this.error = 'Unable to retrieve account number. Please log in again.';
+    }
+  }
+
+  getAccountNumberFromToken(): void {
+    try {
+      const token = this.authService.getAccessToken();
+      if (token) {
+        const decoded: DecodedToken = jwtDecode(token);
+        this.accountNumber = decoded.user.accountnumber;
+      }
+    } catch (error) {
+      console.error('Error decoding token:', error);
+      this.error = 'Invalid token. Please log in again.';
+    }
   }
 
   downloadSOA() {
-    if (this.duesForm.invalid) {
+    if (!this.accountNumber) {
+      this.error = 'Account number not found';
       return;
     }
 
-    const accountNumber = this.duesForm.get('accountNumber')?.value;
     this.isDownloading = true;
 
-    this.dataService.getStatementOfAccount(accountNumber).subscribe({
+    this.dataService.getStatementOfAccount(this.accountNumber).subscribe({
       next: (pdfBlob: Blob) => {
         const url = window.URL.createObjectURL(pdfBlob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `SOA_${accountNumber}.pdf`;
+        a.download = `SOA_${this.accountNumber}.pdf`;
         a.click();
         window.URL.revokeObjectURL(url);
         this.isDownloading = false;
@@ -70,7 +100,8 @@ export class HomeComponent implements OnInit {
   }
 
   getDuesHistory() {
-    if (this.duesForm.invalid) {
+    if (!this.accountNumber) {
+      this.error = 'Account number not found';
       return;
     }
 
@@ -78,18 +109,16 @@ export class HomeComponent implements OnInit {
     this.error = '';
     this.currentPage = 1;
 
-    const accountNumber = this.duesForm.get('accountNumber')?.value;
-
     forkJoin({
-      dues: this.dataService.getMonthlyDuesHistory(accountNumber),
-      garbage: this.dataService.getGarbageCollectionStatus(accountNumber)
+      dues: this.dataService.getMonthlyDuesHistory(this.accountNumber),
+      garbage: this.dataService.getGarbageCollectionStatus(this.accountNumber)
     }).subscribe({
       next: (response) => {
         this.duesHistory = response.dues;
         this.garbageStatus = response.garbage.garbageCollectionStatus;
         this.loading = false;
 
-        if (this.duesHistory && this.duesHistory.duesHistory) {
+        if (this.duesHistory && this.duesHistory.allMonths) {
           this.setUpPagination();
         }
       },
@@ -101,13 +130,13 @@ export class HomeComponent implements OnInit {
   }
 
   setUpPagination(): void {
-    if (!this.duesHistory || !this.duesHistory.duesHistory || !this.duesHistory.duesHistory.length) {
+    if (!this.duesHistory || !this.duesHistory.allMonths || !this.duesHistory.allMonths.length) {
       this.totalPages = 0;
       this.paginatedDuesHistory = [];
       return;
     }
 
-    this.totalPages = Math.ceil(this.duesHistory.duesHistory.length / this.pageSize);
+    this.totalPages = Math.ceil(this.duesHistory.allMonths.length / this.pageSize);
     this.goToPage(1);
   }
 
@@ -118,8 +147,8 @@ export class HomeComponent implements OnInit {
 
     this.currentPage = page;
     const startIndex = (page - 1) * this.pageSize;
-    const endIndex = Math.min(startIndex + this.pageSize, this.duesHistory.duesHistory.length);
-    this.paginatedDuesHistory = this.duesHistory.duesHistory.slice(startIndex, endIndex);
+    const endIndex = Math.min(startIndex + this.pageSize, this.duesHistory.allMonths.length);
+    this.paginatedDuesHistory = this.duesHistory.allMonths.slice(startIndex, endIndex);
   }
 
   nextPage(): void {
@@ -138,7 +167,8 @@ export class HomeComponent implements OnInit {
     return this.statusClass[status as keyof typeof this.statusClass] || '';
   }
 
-  getFormattedDate(dateString: string): string {
+  getFormattedDate(dateString: string | null): string {
+    if (!dateString) return '-';
     return new Date(dateString).toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'short',
@@ -184,10 +214,7 @@ export class HomeComponent implements OnInit {
     return pages;
   }
 
-  getMonthYear(dateString: string): string {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'long'
-    });
+  getMonthYear(payment: any): string {
+    return `${payment.monthName} ${payment.year}`;
   }
 }

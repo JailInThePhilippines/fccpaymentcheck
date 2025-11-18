@@ -22,8 +22,20 @@ export class DataService {
   getStatementOfAccount(accountNumber: string): Observable<Blob> {
     return this.http.get(`${this.baseUrl}/soa`, {
       params: { accountNumber },
-      responseType: 'blob' 
+      responseType: 'blob'
     });
+  }
+
+  verifyQRCode(homeownerId: string): Observable<any> {
+    return this.http.post(`${this.baseUrl}/verify-qr-code`, { homeownerId });
+  }
+
+  completeProfile(data: any): Observable<any> {
+    return this.http.post(`${this.baseUrl}/complete-profile`, data);
+  }
+
+  getDetails(homeownerId: string): Observable<any> {
+    return this.http.get(`${this.baseUrl}/details/${homeownerId}`);
   }
 
 }
