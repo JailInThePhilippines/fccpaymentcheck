@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Router } from '@angular/router';
 import { DataService } from '../../services/data.service';
 import { AuthService } from '../../services/auth.service';
 import { forkJoin } from 'rxjs';
@@ -30,17 +31,12 @@ export class HomeComponent implements OnInit {
   loading = false;
   error = '';
   accountNumber: string = '';
-  statusClass = {
-    'paid': 'status-paid',
-    'pending': 'status-pending',
-    'overdue': 'status-overdue',
-    'upcoming': 'status-upcoming',
-    'unpaid': 'status-unpaid'
-  };
   isDownloading = false;
+  isSideMenuOpen = false;
+  showLogoutConfirm = false;
 
   // Pagination properties
-  pageSize = 5;
+  pageSize = 10;
   currentPage = 1;
   totalPages = 0;
   paginatedDuesHistory: any[] = [];
@@ -49,7 +45,8 @@ export class HomeComponent implements OnInit {
 
   constructor(
     private dataService: DataService,
-    private authService: AuthService
+    private authService: AuthService,
+    private router: Router
   ) {}
 
   ngOnInit(): void {
@@ -163,12 +160,8 @@ export class HomeComponent implements OnInit {
     }
   }
 
-  getStatusClass(status: string): string {
-    return this.statusClass[status as keyof typeof this.statusClass] || '';
-  }
-
   getFormattedDate(dateString: string | null): string {
-    if (!dateString) return '-';
+    if (!dateString) return '—';
     return new Date(dateString).toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'short',
@@ -216,5 +209,38 @@ export class HomeComponent implements OnInit {
 
   getMonthYear(payment: any): string {
     return `${payment.monthName} ${payment.year}`;
+  }
+
+  onLogout(): void {
+    this.showLogoutConfirm = true;
+  }
+
+  confirmLogout(): void {
+    this.showLogoutConfirm = false;
+    this.authService.logout().subscribe({
+      next: () => {
+        this.router.navigate(['/auth/login']);
+      },
+      error: (err) => {
+        console.error('Logout error:', err);
+        // Even if the API call fails, clear local data and redirect
+        this.authService.clearAuth();
+        this.router.navigate(['/auth/login']);
+      }
+    });
+  }
+
+  cancelLogout(): void {
+    this.showLogoutConfirm = false;
+  }
+
+  navigateToProfile(event: Event): void {
+    event.preventDefault();
+    this.router.navigate(['/homeowners/profile']);
+    this.isSideMenuOpen = false;
+  }
+
+  toggleSideMenu(): void {
+    this.isSideMenuOpen = !this.isSideMenuOpen;
   }
 }
