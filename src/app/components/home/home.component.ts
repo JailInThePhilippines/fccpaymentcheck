@@ -47,7 +47,7 @@ export class HomeComponent implements OnInit {
     private dataService: DataService,
     private authService: AuthService,
     private router: Router
-  ) {}
+  ) { }
 
   ngOnInit(): void {
     this.getAccountNumberFromToken();
@@ -96,6 +96,10 @@ export class HomeComponent implements OnInit {
     });
   }
 
+  getLastDayOfMonth(year: number, month: number): Date {
+    return new Date(year, month + 1, 0);
+  }
+
   getDuesHistory() {
     if (!this.accountNumber) {
       this.error = 'Account number not found';
@@ -113,6 +117,18 @@ export class HomeComponent implements OnInit {
       next: (response) => {
         this.duesHistory = response.dues;
         this.garbageStatus = response.garbage.garbageCollectionStatus;
+
+        // Add calculated due dates to allMonths
+        if (this.duesHistory && this.duesHistory.allMonths) {
+          this.duesHistory.allMonths = this.duesHistory.allMonths.map((payment: any) => {
+
+            const lastDay = this.getLastDayOfMonth(payment.year, payment.month);
+            payment.dueDate = lastDay.toISOString();
+
+            return payment;
+          });
+        }
+
         this.loading = false;
 
         if (this.duesHistory && this.duesHistory.allMonths) {
